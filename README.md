@@ -2,6 +2,8 @@
 
 Insert an editable Excel spreadsheet into the current SiYuan document, then run AI operations on selected rows. It is designed for notes that contain reading excerpts, course lists, research tables, customer lists, topic plans, and other spreadsheet-shaped knowledge.
 
+中文用户请阅读：[中文介绍](README_zh_CN.md) / [完整中文使用说明](MANUAL_zh_CN.md)。
+
 ![Excel AI Editor Logo](assets/logo.png)
 
 ## Preview
