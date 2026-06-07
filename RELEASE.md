@@ -1,10 +1,15 @@
 # Release Notes
 
-## v0.1.21
+## v0.1.22
 
-Marketplace polish update for Excel AI Editor.
+Chinese documentation update for Excel AI Editor.
 
 ### Highlights
+
+- Add `MANUAL_zh_CN.md`, a complete Chinese user guide covering installation, quick start, table editing, AI workflows, model configuration, privacy, and troubleshooting.
+- Link the new Chinese guide from `README_zh_CN.md` so users can reach the full tutorial from GitHub and the SiYuan Bazaar listing.
+
+### Included From Previous Release
 
 - Add a new Moon Teacher style logo: a soft spreadsheet, crescent moon, and quiet star mark.
 - Refresh the marketplace preview with a real embedded Excel AI interface screenshot.
@@ -26,4 +31,4 @@ Only the selected spreadsheet range is sent to the configured model provider. AP
 
 ### Package
 
-Upload `package.zip` as the GitHub Release asset for tag `v0.1.21`.
+Upload `package.zip` as the GitHub Release asset for tag `v0.1.22`.

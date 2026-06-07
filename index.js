@@ -3,7 +3,7 @@
 const { Plugin, showMessage } = require("siyuan");
 
 const PLUGIN_NAME = "siyuan-excel-ai";
-const PLUGIN_VERSION = "0.1.21";
+const PLUGIN_VERSION = "0.1.22";
 const SETTINGS_FILE = "settings.json";
 const MESSAGE_PREFIX = "siyuan-excel-ai:";
 

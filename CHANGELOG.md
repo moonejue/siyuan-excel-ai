@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.22
+
+- Add a complete Chinese user guide `MANUAL_zh_CN.md` with installation, AI workflows, model setup, privacy notes, and troubleshooting.
+- Link the Chinese guide from the marketplace README.
+
 ## 0.1.21
 
 - Add a redesigned Moon Teacher style logo and refreshed marketplace icon.
