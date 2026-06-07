@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.24
+
+- Fix workbook data disappearing after closing and reopening SiYuan.
+- Save embedded workbook files directly through SiYuan kernel file APIs, keyed by the current iframe block ID.
+- Store workbook file metadata on the block attributes and keep the parent-plugin message channel only as a fallback.
+- Report save failures instead of silently falling back to temporary browser storage in embedded mode.
+
 ## 0.1.23
 
 - Add a workbook save button to persist each embedded Excel block.

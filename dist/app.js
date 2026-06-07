@@ -2,6 +2,9 @@ const PLUGIN_NAME = "siyuan-excel-ai";
 const MESSAGE_PREFIX = "siyuan-excel-ai:";
 const LEGACY_SETTINGS_KEY = `${PLUGIN_NAME}:settings`;
 const LEGACY_WORKBOOK_KEY = `${PLUGIN_NAME}:workbook`;
+const WORKBOOK_STORAGE_DIR = `/data/storage/petal/${PLUGIN_NAME}/workbooks`;
+const WORKBOOK_ATTR = "custom-siyuan-excel-ai-workbook";
+const SAVED_AT_ATTR = "custom-siyuan-excel-ai-saved-at";
 
 const PROVIDER_PRESETS = {
   ollama: { label: "Ollama（本机）", protocol: "ollama", endpoint: "http://127.0.0.1:11434", model: "" },
@@ -168,6 +171,40 @@ function markUnsaved(message = "有未保存更改", force = false) {
   setStatus(message);
 }
 
+function isEmbeddedMode() {
+  return window.parent && window.parent !== window;
+}
+
+function safeID(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[^A-Za-z0-9_-]/g, "_")
+    .slice(0, 96);
+}
+
+function resolveFrameBlockID() {
+  try {
+    const frame = window.frameElement;
+    const hostBlock = frame?.closest?.(".protyle-wysiwyg [data-node-id], [data-node-id]");
+    const id = hostBlock?.dataset?.nodeId || frame?.dataset?.moonExcelId || new URL(location.href).searchParams.get("workbook") || "";
+    return safeID(id);
+  } catch {
+    return "";
+  }
+}
+
+function workbookPathForID(id) {
+  const safe = safeID(id);
+  if (!safe) throw new Error("无法定位当前 Excel 表格块，不能保存到思源数据");
+  return `${WORKBOOK_STORAGE_DIR}/${safe}.json`;
+}
+
+function legacyWorkbookPathForID(id) {
+  const safe = safeID(id);
+  if (!safe) throw new Error("无法定位当前 Excel 表格块，不能读取旧存档");
+  return `/data/storage/petal/${PLUGIN_NAME}/workbook-${safe}.json`;
+}
+
 function hostRequest(type, payload = {}, timeout = 3000) {
   if (!window.parent || window.parent === window) return Promise.reject(new Error("standalone"));
   const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -260,6 +297,67 @@ async function siyuanPost(path, data = {}) {
   const payload = await response.json();
   if (!response.ok || payload.code !== 0) throw new Error(payload.msg || `思源接口失败: ${path}`);
   return payload.data;
+}
+
+async function siyuanGetFile(path) {
+  const response = await fetch("/api/file/getFile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path }),
+  });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`读取文件失败：HTTP ${response.status}`);
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return text;
+  }
+  if (parsed && typeof parsed === "object" && "code" in parsed) {
+    if (parsed.code !== 0) throw new Error(parsed.msg || "文件不存在");
+    return parsed.data;
+  }
+  return text;
+}
+
+async function siyuanPutFile(path, content, mime = "application/json") {
+  const formData = new FormData();
+  formData.append("path", path);
+  formData.append("isDir", "false");
+  formData.append("modTime", String(Math.floor(Date.now() / 1000)));
+  formData.append("file", new Blob([content], { type: mime }), path.split("/").pop() || "workbook.json");
+  const response = await fetch("/api/file/putFile", { method: "POST", body: formData });
+  const payload = await response.json();
+  if (!response.ok || payload.code !== 0) throw new Error(payload.msg || `写入文件失败：${path}`);
+  return payload.data;
+}
+
+async function ensureSiyuanDir(path) {
+  const formData = new FormData();
+  formData.append("path", path);
+  formData.append("isDir", "true");
+  formData.append("modTime", String(Math.floor(Date.now() / 1000)));
+  const response = await fetch("/api/file/putFile", { method: "POST", body: formData });
+  const payload = await response.json();
+  if (!response.ok || payload.code !== 0) throw new Error(payload.msg || `创建目录失败：${path}`);
+}
+
+async function getBlockAttrs(blockID) {
+  if (!blockID) return {};
+  try {
+    return (await siyuanPost("/api/attr/getBlockAttrs", { id: blockID })) || {};
+  } catch {
+    return {};
+  }
+}
+
+async function setBlockAttrs(blockID, attrs) {
+  if (!blockID) return;
+  try {
+    await siyuanPost("/api/attr/setBlockAttrs", { id: blockID, attrs });
+  } catch {
+    // Some test frames do not belong to a real block. File persistence still works.
+  }
 }
 
 async function apiFetch(url, { method = "GET", headers = {}, body, timeout = 120000 } = {}) {
@@ -522,6 +620,43 @@ function loadLegacyWorkbook() {
   }
 }
 
+async function loadWorkbookDirect() {
+  const blockID = resolveFrameBlockID();
+  if (!blockID) return null;
+  workbookID = blockID;
+  const attrs = await getBlockAttrs(blockID);
+  const paths = [...new Set([attrs[WORKBOOK_ATTR], workbookPathForID(blockID), legacyWorkbookPathForID(blockID)].filter(Boolean))];
+  for (const path of paths) {
+    let text;
+    try {
+      text = await siyuanGetFile(path);
+    } catch {
+      continue;
+    }
+    try {
+      const workbook = typeof text === "string" ? JSON.parse(text) : text;
+      return workbook?.sheets?.length ? workbook : null;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+async function saveWorkbookDirect(workbook) {
+  const blockID = resolveFrameBlockID();
+  if (!blockID) throw new Error("无法定位当前 Excel 表格块，不能保存");
+  workbookID = blockID;
+  const path = workbookPathForID(blockID);
+  await ensureSiyuanDir(WORKBOOK_STORAGE_DIR);
+  await siyuanPutFile(path, JSON.stringify({ ...workbook, workbookID: blockID, savedAt: new Date().toISOString() }));
+  await setBlockAttrs(blockID, {
+    [WORKBOOK_ATTR]: path,
+    [SAVED_AT_ATTR]: new Date().toISOString(),
+  });
+  return { workbookID: blockID, path };
+}
+
 function celldataToData(sheet) {
   const rowCount = Math.max(Number(sheet?.row) || 0, ...((sheet?.celldata || []).map((cell) => Number(cell.r) + 1)), 1);
   const colCount = Math.max(Number(sheet?.column) || 0, ...((sheet?.celldata || []).map((cell) => Number(cell.c) + 1)), 1);
@@ -601,6 +736,14 @@ function scheduleWorkbookRestore(sheets) {
 }
 
 async function loadWorkbook() {
+  const direct = await loadWorkbookDirect();
+  if (direct?.sheets?.length) {
+    return {
+      title: direct.title || "思源 Excel AI 编辑器",
+      sheets: direct.sheets,
+    };
+  }
+
   let stored = null;
   try {
     const data = await hostRequest("load-workbook", {}, 8000);
@@ -624,12 +767,22 @@ async function saveWorkbook() {
   setStatus("正在保存...");
   try {
     const workbook = serializeWorkbook();
-    localStorage.setItem(LEGACY_WORKBOOK_KEY, JSON.stringify(workbook));
+    let saved = false;
     try {
-      const data = await hostRequest("save-workbook", { workbook }, 15000);
+      const data = await saveWorkbookDirect(workbook);
       workbookID = data?.workbookID || workbookID;
-    } catch {
-      // Standalone previews keep using localStorage.
+      saved = true;
+    } catch (directError) {
+      try {
+        const data = await hostRequest("save-workbook", { workbook }, 15000);
+        workbookID = data?.workbookID || workbookID;
+        saved = true;
+      } catch (hostError) {
+        if (isEmbeddedMode()) throw new Error(`${directError.message || directError}; ${hostError.message || hostError}`);
+      }
+    }
+    if (!saved) {
+      localStorage.setItem(LEGACY_WORKBOOK_KEY, JSON.stringify(workbook));
     }
     setStatus("已保存");
     notify("Excel 表格已保存");

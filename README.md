@@ -14,7 +14,7 @@ Insert an editable Excel spreadsheet into the current SiYuan document, then run 
 
 - Insert an Excel editor block into the current document instead of opening a separate page.
 - Import `.xlsx` files and export the edited workbook as `.xlsx`.
-- Click `Save` to overwrite the saved workbook for the current embedded Excel block, then reopen the note page to restore it.
+- Click `Save` to write the current workbook into SiYuan's data storage for this embedded Excel block, then reopen or restart SiYuan to restore it.
 - Use common spreadsheet editing features: cells, formatting, borders, sheet switching, and range selection.
 - Run AI applications on selected ranges: summary, custom AI, classification, extraction, and formula calculation.
 - Preview the first 3 rows before applying to the full selection.
