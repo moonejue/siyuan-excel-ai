@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel AI 编辑器</title>
+    <link rel="stylesheet" href="./vendor/luckysheet-widget/plugins/css/pluginsCss.css?v=0.1.20">
+    <link rel="stylesheet" href="./vendor/luckysheet-widget/plugins/plugins.css?v=0.1.20">
+    <link rel="stylesheet" href="./vendor/luckysheet-widget/css/luckysheet.css?v=0.1.20">
+    <link rel="stylesheet" href="./vendor/luckysheet-widget/assets/iconfont/iconfont.css?v=0.1.20">
+    <link rel="stylesheet" href="./app.css?v=0.1.20">
+  </head>
+  <body>
+    <div class="moon-excel-app">
+      <header class="moon-excel-toolbar">
+        <div class="moon-excel-toolbar__left">
+          <label class="moon-excel-file">
+            <span>导入 .xlsx</span>
+            <input type="file" accept=".xlsx" data-action="import-file">
+          </label>
+          <button type="button" data-action="export-file">导出文件</button>
+          <button type="button" class="moon-excel-ai-button" data-action="toggle-ai">AI 应用</button>
+        </div>
+        <span class="moon-excel-status" data-role="status">已就绪</span>
+      </header>
+
+      <main class="moon-excel-workspace">
+        <div id="luckysheet"></div>
+        <aside class="moon-excel-ai-panel" data-role="ai-panel" aria-label="AI 应用面板">
+          <div class="moon-excel-ai-panel__head">
+            <div>
+              <strong>AI 应用</strong>
+              <small>对当前选区逐行处理，结果写入新增列</small>
+            </div>
+            <button type="button" data-action="toggle-ai">关闭</button>
+          </div>
+
+          <div class="moon-excel-ai-scroll" data-role="ai-scroll">
+            <section class="moon-excel-model">
+              <button type="button" class="moon-excel-section-toggle" data-action="toggle-settings">AI 模型设置</button>
+              <div class="moon-excel-settings" data-role="settings">
+                <label>服务商预设
+                  <select data-field="preset"></select>
+                </label>
+                <label>接口协议
+                  <select data-field="protocol">
+                    <option value="ollama">Ollama</option>
+                    <option value="openai">OpenAI 兼容</option>
+                    <option value="anthropic">Anthropic</option>
+                  </select>
+                </label>
+                <label>接口地址
+                  <input data-field="endpoint" placeholder="http://127.0.0.1:11434">
+                </label>
+                <label>模型名称
+                  <input data-field="model" placeholder="例如 qwen3:8b">
+                </label>
+                <label>API Key（可选）
+                  <input data-field="apiKey" type="password" autocomplete="off">
+                </label>
+                <div class="moon-excel-settings__actions">
+                  <button type="button" data-action="detect-models">检测可用模型</button>
+                  <button type="button" data-action="save-settings">保存设置</button>
+                </div>
+                <p data-role="model-status">默认连接本机 Ollama。第三方 API 会接收你选择的表格内容。</p>
+              </div>
+            </section>
+
+            <section>
+              <h2>AI 应用类型</h2>
+              <div class="moon-excel-cards" data-role="operation-cards"></div>
+            </section>
+
+            <section class="moon-excel-form">
+              <label class="moon-excel-checkbox">
+                <input type="checkbox" data-field="header-row" checked>
+                <span>选区第一行是表头</span>
+              </label>
+              <label data-role="instruction-wrap">处理要求
+                <textarea data-field="instruction" rows="3" placeholder="例如：整理成一句话；或提取手机号"></textarea>
+              </label>
+              <label data-role="categories-wrap" hidden>候选分类
+                <input data-field="categories" placeholder="例如：工作, 生活, 学习, 其他">
+              </label>
+              <label data-role="formula-wrap" hidden>公式
+                <input data-field="formula" placeholder="例如：={单价}*{数量} 或 ROUND(AVG({语文},{数学}), 1)">
+                <small>支持 SUM、AVG、MIN、MAX、ROUND、ABS、COUNT、POW、SQRT。字段请写成 {字段名}。</small>
+              </label>
+              <div class="moon-excel-formula-assist" data-role="formula-assist-wrap" hidden>
+                <input data-field="formula-request" placeholder="用自然语言描述公式">
+                <button type="button" data-action="complete-formula">AI 补全公式</button>
+              </div>
+              <label>结果列名
+                <input data-field="result-name" value="AI 总结">
+              </label>
+            </section>
+
+            <section class="moon-excel-preview" data-role="preview" hidden></section>
+          </div>
+
+          <footer class="moon-excel-ai-footer">
+            <div class="moon-excel-progress" data-role="progress"></div>
+            <div class="moon-excel-actions">
+              <button type="button" data-action="preview">预览前 3 行</button>
+              <button type="button" class="moon-excel-primary" data-action="run">应用到选区</button>
+            </div>
+          </footer>
+        </aside>
+      </main>
+    </div>
+
+    <script src="./vendor/luckysheet-widget/plugins/js/plugin.js?v=0.1.20"></script>
+    <script src="./vendor/luckysheet-widget/luckysheet.umd.js?v=0.1.20"></script>
+    <script type="module" src="./app.js?v=0.1.20"></script>
+  </body>
+</html>

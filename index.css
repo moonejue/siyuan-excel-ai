@@ -1,0 +1,32 @@
+.moon-excel-ai-tab {
+  height: 100%;
+}
+
+.moon-excel-ai-tab .protyle-preview {
+  height: calc(100% - 32px);
+}
+
+.moon-excel-ai-tab iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--b3-theme-background);
+}
+
+.protyle-wysiwyg iframe[src*="/plugins/siyuan-excel-ai/dist/"] {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 720px !important;
+  min-height: 720px;
+  margin: 0 !important;
+  vertical-align: top !important;
+  transform: translateZ(0);
+}
+
+.protyle-wysiwyg .moon-excel-ai-embed-block {
+  box-sizing: border-box !important;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}

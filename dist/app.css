@@ -1,0 +1,555 @@
+:root {
+  color-scheme: light dark;
+  --moon-bg: #f8f6f1;
+  --moon-panel: #fffdf8;
+  --moon-surface: #f3eee4;
+  --moon-surface-soft: #faf7f0;
+  --moon-text: #2f2a23;
+  --moon-muted: #756c60;
+  --moon-border: #ded5c7;
+  --moon-primary: #7f8c78;
+  --moon-primary-deep: #5f6e5a;
+  --moon-primary-soft: #edf2e8;
+  --moon-accent: #b88d62;
+  --moon-danger: #a64a3f;
+  --moon-success: #4f7657;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --moon-bg: #181c20;
+    --moon-panel: #23282d;
+    --moon-surface: #2b3137;
+    --moon-surface-soft: #20252a;
+    --moon-text: #e6edf3;
+    --moon-muted: #9aa8b4;
+    --moon-border: #3a444d;
+    --moon-primary: #4aa5e8;
+    --moon-primary-deep: #7dbef0;
+    --moon-primary-soft: #21384a;
+    --moon-accent: #d3a26f;
+    --moon-danger: #ef7777;
+    --moon-success: #65c28d;
+  }
+}
+
+.moon-excel-toolbar,
+.moon-excel-toolbar *,
+.moon-excel-ai-panel,
+.moon-excel-ai-panel * {
+  box-sizing: border-box;
+}
+
+html,
+body,
+.moon-excel-app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--moon-bg);
+  color: var(--moon-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.moon-excel-toolbar button,
+.moon-excel-ai-panel button,
+.moon-excel-ai-panel input,
+.moon-excel-ai-panel select,
+.moon-excel-ai-panel textarea {
+  font: inherit;
+}
+
+.moon-excel-ai-panel {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.moon-excel-ai-panel [hidden] {
+  display: none !important;
+}
+
+.moon-excel-toolbar button,
+.moon-excel-ai-panel button {
+  min-height: 30px;
+  padding: 5px 11px;
+  border: 1px solid var(--moon-border);
+  border-radius: 6px;
+  background: var(--moon-panel);
+  color: var(--moon-text);
+  cursor: pointer;
+}
+
+.moon-excel-toolbar button:hover,
+.moon-excel-ai-panel button:hover {
+  border-color: var(--moon-primary);
+  color: var(--moon-primary);
+}
+
+.moon-excel-toolbar button:disabled,
+.moon-excel-ai-panel button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.moon-excel-ai-panel input,
+.moon-excel-ai-panel select,
+.moon-excel-ai-panel textarea {
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--moon-border);
+  border-radius: 6px;
+  background: var(--moon-panel);
+  color: var(--moon-text);
+}
+
+.moon-excel-ai-panel textarea {
+  min-height: 78px;
+  resize: vertical;
+}
+
+.luckysheet .iconfont[class*="luckysheet-iconfont-"],
+.luckysheet-icon-img-container.iconfont,
+.luckysheet-submenu-arrow .iconfont {
+  font-family: "iconfont-luckysheet" !important;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.moon-excel-toolbar {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  gap: 12px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--moon-border);
+  background: var(--moon-panel);
+}
+
+.moon-excel-toolbar__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.moon-excel-file {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 11px;
+  border: 1px solid var(--moon-border);
+  border-radius: 6px;
+  background: var(--moon-panel);
+  cursor: pointer;
+}
+
+.moon-excel-file:hover {
+  border-color: var(--moon-primary);
+  color: var(--moon-primary);
+}
+
+.moon-excel-file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.moon-excel-ai-button,
+.moon-excel-primary {
+  border-color: var(--moon-primary);
+  background: var(--moon-primary);
+  color: #fff;
+}
+
+.moon-excel-ai-button:hover,
+.moon-excel-primary:hover {
+  color: #fff;
+  filter: brightness(1.05);
+}
+
+.moon-excel-status {
+  overflow: hidden;
+  color: var(--moon-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.moon-excel-workspace {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0;
+  width: 100%;
+  height: calc(100% - 42px);
+  min-height: 0;
+}
+
+.moon-excel-app.ai-open .moon-excel-workspace {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+}
+
+#luckysheet {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.moon-excel-ai-panel {
+  position: relative;
+  z-index: 25;
+  display: none;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--moon-border);
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(184, 141, 98, 0.12), transparent 32%),
+    var(--moon-panel);
+  box-shadow: -10px 0 22px rgba(47, 42, 35, 0.1);
+}
+
+.moon-excel-app.ai-open .moon-excel-ai-panel.open {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.moon-excel-ai-panel__head,
+.moon-excel-settings__actions,
+.moon-excel-actions,
+.moon-excel-formula-assist {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.moon-excel-ai-panel__head {
+  flex: 0 0 auto;
+  justify-content: space-between;
+  z-index: 2;
+  padding: 13px 14px 12px;
+  border-bottom: 1px solid var(--moon-border);
+  background: rgba(255, 253, 248, 0.96);
+  backdrop-filter: blur(10px);
+}
+
+.moon-excel-ai-panel__head strong {
+  display: block;
+  font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.moon-excel-ai-panel small,
+.moon-excel-model p {
+  color: var(--moon-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.moon-excel-ai-panel section {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.moon-excel-ai-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+}
+
+.moon-excel-section-toggle {
+  width: 100%;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 650;
+  background: var(--moon-surface-soft);
+  color: var(--moon-text);
+}
+
+.moon-excel-section-toggle::after {
+  content: "⌄";
+  float: right;
+  color: var(--moon-muted);
+  font-weight: 400;
+}
+
+.moon-excel-model {
+  display: grid;
+  gap: 8px;
+}
+
+.moon-excel-model p {
+  margin: 0;
+  text-align: left;
+}
+
+.moon-excel-settings {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 9px;
+  padding: 10px;
+  border: 1px solid var(--moon-border);
+  border-radius: 8px;
+  background: rgba(243, 238, 228, 0.72);
+}
+
+.moon-excel-settings.open {
+  display: grid;
+}
+
+.moon-excel-settings label,
+.moon-excel-form label {
+  display: grid;
+  gap: 5px;
+  color: var(--moon-text);
+  font-size: 12px;
+}
+
+.moon-excel-settings label:nth-child(3),
+.moon-excel-settings label:nth-child(4),
+.moon-excel-settings label:nth-child(5),
+.moon-excel-settings__actions,
+.moon-excel-model p {
+  grid-column: 1 / -1;
+}
+
+.moon-excel-settings__actions button {
+  flex: 1;
+}
+
+.moon-excel-formula-assist input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.moon-excel-formula-assist button {
+  flex: 0 0 auto;
+  max-width: 110px;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.moon-excel-ai-panel h2 {
+  margin: 0 0 8px;
+  color: var(--moon-text);
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.moon-excel-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.moon-excel-card {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 10px;
+  text-align: left;
+  background: rgba(255, 253, 248, 0.86);
+}
+
+.moon-excel-card.active {
+  border-color: var(--moon-primary-deep);
+  background: var(--moon-primary-soft);
+  box-shadow: inset 3px 0 0 var(--moon-accent);
+}
+
+.moon-excel-card__icon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--moon-border);
+  border-radius: 50%;
+  color: transparent;
+  font-size: 0;
+  text-align: center;
+}
+
+.moon-excel-card.active .moon-excel-card__icon {
+  border-color: var(--moon-primary-deep);
+  background: var(--moon-primary-deep);
+}
+
+.moon-excel-card.active .moon-excel-card__icon::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--moon-panel);
+}
+
+.moon-excel-card strong,
+.moon-excel-card small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.moon-excel-card strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.moon-excel-card small {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.moon-excel-badge {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgba(184, 141, 98, 0.16);
+  color: var(--moon-accent);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.moon-excel-form {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 10px;
+  border: 1px solid var(--moon-border);
+  border-radius: 8px;
+  background: rgba(250, 247, 240, 0.9);
+}
+
+.moon-excel-checkbox {
+  display: flex !important;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 7px !important;
+}
+
+.moon-excel-checkbox input {
+  width: auto;
+  min-height: auto;
+  margin: 0;
+  accent-color: var(--moon-primary-deep);
+}
+
+.moon-excel-actions button {
+  flex: 1;
+}
+
+.moon-excel-actions {
+  width: 100%;
+}
+
+.moon-excel-ai-footer {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 8px;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--moon-border);
+  background: rgba(250, 247, 240, 0.97);
+  box-shadow: 0 -8px 18px rgba(47, 42, 35, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.moon-excel-progress {
+  min-height: 18px;
+  color: var(--moon-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.moon-excel-progress.error {
+  color: var(--moon-danger);
+}
+
+.moon-excel-progress.success {
+  color: var(--moon-success);
+}
+
+.moon-excel-preview {
+  display: grid;
+  gap: 8px;
+}
+
+.moon-excel-preview__row {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--moon-border);
+  border-radius: 6px;
+  background: var(--moon-surface);
+}
+
+.moon-excel-preview__row strong {
+  font-size: 12px;
+}
+
+.moon-excel-preview__row span {
+  color: var(--moon-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 720px) {
+  .moon-excel-toolbar {
+    align-items: stretch;
+    height: auto;
+    min-height: 42px;
+  }
+
+  .moon-excel-toolbar__left {
+    flex-wrap: wrap;
+  }
+
+  .moon-excel-status {
+    display: none;
+  }
+
+  .moon-excel-workspace {
+    display: block;
+    height: calc(100% - 76px);
+  }
+
+  .moon-excel-app.ai-open .moon-excel-workspace {
+    display: grid;
+    grid-template-rows: minmax(260px, 1fr) minmax(320px, 48%);
+    grid-template-columns: 1fr;
+  }
+
+  .moon-excel-ai-panel {
+    border-top: 1px solid var(--moon-border);
+    border-left: 0;
+    box-shadow: 0 -10px 24px rgba(10, 25, 40, 0.12);
+  }
+}
