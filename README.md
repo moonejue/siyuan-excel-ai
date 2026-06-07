@@ -1,26 +1,29 @@
 # Excel AI Editor
 
-Insert an editable Excel spreadsheet into the current SiYuan document and run AI applications on selected spreadsheet ranges. The plugin supports `.xlsx` import, editing, export, local models, and mainstream cloud model APIs.
+Insert an editable Excel spreadsheet into the current SiYuan document, then run AI operations on selected rows. It is designed for notes that contain reading excerpts, course lists, research tables, customer lists, topic plans, and other spreadsheet-shaped knowledge.
 
-![Preview](preview.png)
+![Excel AI Editor Logo](assets/logo.png)
 
-## Features
+## Preview
+
+![Excel AI Editor Preview](preview.png)
+
+## What It Does
 
 - Insert an Excel editor block into the current document instead of opening a separate page.
-- Luckysheet-powered spreadsheet editing, including common cell editing, formatting, borders, and sheet switching.
 - Import `.xlsx` files and export the edited workbook as `.xlsx`.
-- Run AI applications on the selected range row by row.
+- Use common spreadsheet editing features: cells, formatting, borders, sheet switching, and range selection.
+- Run AI applications on selected ranges: summary, custom AI, classification, extraction, and formula calculation.
+- Preview the first 3 rows before applying to the full selection.
 - Write AI results into a new result column by default, without overwriting original data.
-- Preview the first 3 rows before applying to the whole selection.
-- Persist model settings in the current SiYuan client.
 
 ## AI Applications
 
-- Summary: summarize long text into a clear short result.
-- Custom AI: process each row with a custom instruction.
-- Classification: choose the best category from candidate labels.
-- Extraction: extract names, phone numbers, tags, or other structured information.
-- Formula: calculate results with simple Excel-like formulas and optionally ask AI to generate a formula from natural language.
+- Summary: turn long text into a clear short result.
+- Custom AI: process each row with your own instruction.
+- Classification: choose the best label from candidate categories.
+- Extraction: extract names, phone numbers, tags, book titles, authors, and other structured information.
+- Formula: calculate with simple Excel-like formulas, or ask AI to generate a formula from natural language.
 
 ## Model Support
 

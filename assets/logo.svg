@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="42%" cy="34%" r="76%">
+      <stop offset="0" stop-color="#fffdf7"/>
+      <stop offset="0.56" stop-color="#f7f1e5"/>
+      <stop offset="1" stop-color="#efe4cf"/>
+    </radialGradient>
+    <linearGradient id="green" x1="180" x2="720" y1="210" y2="760" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8aa08f"/>
+      <stop offset="1" stop-color="#657b68"/>
+    </linearGradient>
+    <linearGradient id="moon" x1="452" x2="845" y1="445" y2="866" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f5d995"/>
+      <stop offset="0.58" stop-color="#d9a844"/>
+      <stop offset="1" stop-color="#c69031"/>
+    </linearGradient>
+    <filter id="softShadow" x="-18%" y="-18%" width="136%" height="136%">
+      <feDropShadow dx="0" dy="18" stdDeviation="28" flood-color="#756241" flood-opacity="0.18"/>
+    </filter>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0.045"/></feComponentTransfer>
+      <feBlend mode="multiply" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+  <rect x="26" y="26" width="972" height="972" rx="196" fill="url(#bg)"/>
+  <circle cx="510" cy="501" r="367" fill="#e7dfd0" opacity="0.38"/>
+  <g filter="url(#softShadow)">
+    <rect x="196" y="282" width="506" height="456" rx="50" fill="none" stroke="url(#green)" stroke-width="18"/>
+    <path d="M208 330h482v88H208z" fill="url(#green)" opacity="0.9"/>
+    <path d="M208 458h482M208 536h482M208 614h482M314 418v320M424 418v320M536 418v320M646 418v320" stroke="#b8c6b8" stroke-width="8"/>
+    <rect x="318" y="540" width="106" height="72" rx="7" fill="#bccb9c" opacity="0.72"/>
+    <rect x="214" y="424" width="98" height="104" fill="#6d856f" opacity="0.9"/>
+  </g>
+  <path d="M733 430C661 585 519 654 374 620c83 125 268 186 425 83 122-80 156-238 88-356-13 39-54 66-154 83z" fill="url(#moon)" filter="url(#softShadow)"/>
+  <path d="M769 148l42 90 94 39-91 43-40 93-43-91-92-40 91-42z" fill="#647a67" opacity="0.93"/>
+  <circle cx="858" cy="190" r="19" fill="#647a67" opacity="0.9"/>
+  <circle cx="748" cy="317" r="16" fill="#647a67" opacity="0.76"/>
+  <rect x="26" y="26" width="972" height="972" rx="196" fill="transparent" filter="url(#grain)"/>
+</svg>

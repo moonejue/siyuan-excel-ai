@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.21
+
+- Add a redesigned Moon Teacher style logo and refreshed marketplace icon.
+- Replace the marketplace preview with a real Excel AI interface screenshot.
+- Rewrite Chinese and English README files for a clearer public listing.
+- Compress public images to reduce package size while keeping the interface readable.
+
 ## 0.1.20
 
 - Prepare the first public GitHub and SiYuan Bazaar release.
