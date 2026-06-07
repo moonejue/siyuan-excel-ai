@@ -1,16 +1,20 @@
 # Release Notes
 
-## v0.1.22
+## v0.1.23
 
-Chinese documentation update for Excel AI Editor.
+Workbook persistence update for Excel AI Editor.
 
 ### Highlights
 
-- Add `MANUAL_zh_CN.md`, a complete Chinese user guide covering installation, quick start, table editing, AI workflows, model configuration, privacy, and troubleshooting.
-- Link the new Chinese guide from `README_zh_CN.md` so users can reach the full tutorial from GitHub and the SiYuan Bazaar listing.
+- Add a `保存` button to the top toolbar.
+- Save the current Luckysheet workbook into SiYuan plugin data for the current embedded Excel block.
+- Reopen the same note page and automatically restore the saved workbook.
+- Saving overwrites the latest saved copy for that Excel block without changing other embedded Excel blocks.
 
 ### Included From Previous Release
 
+- Add `MANUAL_zh_CN.md`, a complete Chinese user guide covering installation, quick start, table editing, AI workflows, model configuration, privacy, and troubleshooting.
+- Link the new Chinese guide from `README_zh_CN.md` so users can reach the full tutorial from GitHub and the SiYuan Bazaar listing.
 - Add a new Moon Teacher style logo: a soft spreadsheet, crescent moon, and quiet star mark.
 - Refresh the marketplace preview with a real embedded Excel AI interface screenshot.
 - Rewrite the Chinese and English README files for clearer installation, AI workflow, privacy, and support information.
@@ -31,4 +35,4 @@ Only the selected spreadsheet range is sent to the configured model provider. AP
 
 ### Package
 
-Upload `package.zip` as the GitHub Release asset for tag `v0.1.22`.
+Upload `package.zip` as the GitHub Release asset for tag `v0.1.23`.

@@ -1,6 +1,7 @@
 const PLUGIN_NAME = "siyuan-excel-ai";
 const MESSAGE_PREFIX = "siyuan-excel-ai:";
 const LEGACY_SETTINGS_KEY = `${PLUGIN_NAME}:settings`;
+const LEGACY_WORKBOOK_KEY = `${PLUGIN_NAME}:workbook`;
 
 const PROVIDER_PRESETS = {
   ollama: { label: "Ollama（本机）", protocol: "ollama", endpoint: "http://127.0.0.1:11434", model: "" },
@@ -133,6 +134,8 @@ let settings = { ...DEFAULT_SETTINGS };
 let running = false;
 let xlsxModulePromise;
 let sheetApi = null;
+let workbookID = "";
+let dirtyTrackingEnabled = false;
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -158,6 +161,11 @@ function notify(message) {
   if (window.parent && window.parent !== window) {
     window.parent.postMessage({ type: `${MESSAGE_PREFIX}show-message`, payload: { message } }, "*");
   }
+}
+
+function markUnsaved(message = "有未保存更改", force = false) {
+  if (!force && !dirtyTrackingEnabled) return;
+  setStatus(message);
 }
 
 function hostRequest(type, payload = {}, timeout = 3000) {
@@ -441,6 +449,195 @@ function getLuckysheetFiles() {
   return api?.getLuckysheetfile?.() || api?.getluckysheetfile?.() || [];
 }
 
+function deepClone(value) {
+  return JSON.parse(
+    JSON.stringify(value, (_key, item) => {
+      if (typeof item === "function" || typeof item === "undefined") return undefined;
+      return item;
+    })
+  );
+}
+
+function serializeSheet(sheet) {
+  const keys = [
+    "name",
+    "color",
+    "index",
+    "status",
+    "order",
+    "hide",
+    "row",
+    "column",
+    "defaultRowHeight",
+    "defaultColWidth",
+    "celldata",
+    "data",
+    "config",
+    "scrollLeft",
+    "scrollTop",
+    "luckysheet_select_save",
+    "calcChain",
+    "isPivotTable",
+    "pivotTable",
+    "filter_select",
+    "filter",
+    "luckysheet_alternateformat_save",
+    "luckysheet_alternateformat_save_modelCustom",
+    "luckysheet_conditionformat_save",
+    "frozen",
+    "chart",
+    "zoomRatio",
+    "image",
+    "showGridLines",
+    "dataVerification",
+  ];
+  const next = {};
+  keys.forEach((key) => {
+    if (sheet?.[key] !== undefined) next[key] = deepClone(sheet[key]);
+  });
+  return normalizeSheetForLuckysheet(next);
+}
+
+function serializeWorkbook() {
+  const activeSheet = getActiveSheet();
+  const activeData = getSheetData();
+  if (activeSheet && Array.isArray(activeData) && activeData.length) activeSheet.data = activeData;
+  const sheets = getLuckysheetFiles()
+    .filter(Boolean)
+    .map(serializeSheet);
+  if (!sheets.length) throw new Error("没有可保存的工作表");
+  return {
+    version: 1,
+    title: window.__moonExcelAIState?.title || "思源 Excel AI 编辑器",
+    savedAt: new Date().toISOString(),
+    sheets,
+  };
+}
+
+function loadLegacyWorkbook() {
+  try {
+    return JSON.parse(localStorage.getItem(LEGACY_WORKBOOK_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function celldataToData(sheet) {
+  const rowCount = Math.max(Number(sheet?.row) || 0, ...((sheet?.celldata || []).map((cell) => Number(cell.r) + 1)), 1);
+  const colCount = Math.max(Number(sheet?.column) || 0, ...((sheet?.celldata || []).map((cell) => Number(cell.c) + 1)), 1);
+  const data = Array.from({ length: rowCount }, () => Array.from({ length: colCount }, () => blankCell()));
+  (sheet?.celldata || []).forEach((cell) => {
+    if (Number.isFinite(Number(cell.r)) && Number.isFinite(Number(cell.c))) data[Number(cell.r)][Number(cell.c)] = deepClone(cell.v || blankCell());
+  });
+  return data;
+}
+
+function savedSheetData(sheet) {
+  if (Array.isArray(sheet?.data) && sheet.data.length) return sheet.data;
+  if (Array.isArray(sheet?.celldata) && sheet.celldata.length) return celldataToData(sheet);
+  return [];
+}
+
+function trimmedMatrix(data) {
+  const maxRow = Math.max(0, usedMaxRow(data));
+  const maxCol = Math.max(0, usedMaxColumn(data));
+  const matrix = [];
+  for (let row = 0; row <= maxRow; row += 1) {
+    const line = [];
+    for (let col = 0; col <= maxCol; col += 1) line.push(data[row]?.[col] || blankCell());
+    matrix.push(line);
+  }
+  return matrix;
+}
+
+function restoreCellValue(cell) {
+  if (cell === null || cell === undefined) return "";
+  if (typeof cell !== "object") return cell;
+  if (cell.v !== undefined && cell.v !== null) return cell.v;
+  if (cell.m !== undefined && cell.m !== null) return cell.m;
+  if (cell.f !== undefined && cell.f !== null) return String(cell.f).startsWith("=") ? cell.f : `=${cell.f}`;
+  return "";
+}
+
+async function restoreWorkbookCells(sheets) {
+  const api = getSheetApi();
+  if (!api || !Array.isArray(sheets) || !sheets.length) return;
+  const activeIndex = sheets.find((sheet) => sheet.status === 1)?.index ?? sheets[0]?.index;
+  dirtyTrackingEnabled = false;
+  for (const sheet of sheets) {
+    const data = savedSheetData(sheet);
+    const matrix = trimmedMatrix(data);
+    if (!matrix.length || !matrix[0]?.length) continue;
+    try {
+      const currentIndex = getActiveSheet()?.index;
+      if (api.setSheetActive && sheet.index !== undefined && sheet.index !== currentIndex) {
+        api.setSheetActive(sheet.index);
+        await new Promise((resolve) => window.setTimeout(resolve, 80));
+      }
+      matrix.forEach((row, rowIndex) => {
+        (row || []).forEach((cell, colIndex) => {
+          if (cellText(cell).trim()) {
+            setCellValue(rowIndex, colIndex, restoreCellValue(cell));
+          }
+        });
+      });
+    } catch (error) {
+      console.warn(`[${PLUGIN_NAME}] restore sheet failed`, sheet?.name, error);
+    }
+  }
+  try {
+    if (api.setSheetActive && activeIndex !== undefined) api.setSheetActive(activeIndex);
+  } catch {
+    // Best effort only.
+  }
+  refreshSheet();
+  window.setTimeout(() => {
+    dirtyTrackingEnabled = true;
+  }, 300);
+}
+
+function scheduleWorkbookRestore(sheets) {
+  window.setTimeout(() => restoreWorkbookCells(sheets), 900);
+}
+
+async function loadWorkbook() {
+  let stored = null;
+  try {
+    const data = await hostRequest("load-workbook", {}, 8000);
+    workbookID = data?.workbookID || "";
+    stored = data?.workbook || null;
+  } catch {
+    stored = null;
+  }
+  const legacy = loadLegacyWorkbook();
+  const workbook = stored || legacy;
+  if (workbook?.sheets?.length) {
+    return {
+      title: workbook.title || "思源 Excel AI 编辑器",
+      sheets: workbook.sheets,
+    };
+  }
+  return null;
+}
+
+async function saveWorkbook() {
+  setStatus("正在保存...");
+  try {
+    const workbook = serializeWorkbook();
+    localStorage.setItem(LEGACY_WORKBOOK_KEY, JSON.stringify(workbook));
+    try {
+      const data = await hostRequest("save-workbook", { workbook }, 15000);
+      workbookID = data?.workbookID || workbookID;
+    } catch {
+      // Standalone previews keep using localStorage.
+    }
+    setStatus("已保存");
+    notify("Excel 表格已保存");
+  } catch (error) {
+    setStatus(`保存失败：${error.message}`);
+  }
+}
+
 function getSheetApi() {
   return sheetApi || window.luckysheet || globalThis.luckysheet;
 }
@@ -706,6 +903,7 @@ async function runSelection() {
     if (dataset.hasHeader) setCellValue(dataset.headerRow, dataset.resultCol, dataset.resultName);
     results.forEach((item) => setCellValue(item.rowIndex, dataset.resultCol, item.value));
     refreshSheet();
+    markUnsaved("AI 已写入，记得保存", true);
     setProgress(`完成：已写入 ${results.length} 个结果到 ${columnName(dataset.resultCol)} 列`, "success");
     notify(`Excel AI 应用完成：已写入 ${results.length} 个结果`);
   } catch (error) {
@@ -736,7 +934,7 @@ async function importXlsx(file) {
   if (!sheets.length) throw new Error("没有读取到工作表");
   getSheetApi().destroy();
   createLuckysheet(sheets, file.name.replace(/\.xlsx$/i, ""));
-  setStatus(`已导入：${file.name}`);
+  markUnsaved(`已导入：${file.name}，记得保存`, true);
 }
 
 async function exportXlsx() {
@@ -785,6 +983,7 @@ function createLuckysheet(data, title = "思源 Excel AI 编辑器") {
   const api = getSheetApi();
   if (!api) throw new Error("Luckysheet 未加载");
   const normalizedData = data.map(normalizeSheetForLuckysheet);
+  dirtyTrackingEnabled = false;
   api.create({
     container: "luckysheet",
     title,
@@ -799,15 +998,38 @@ function createLuckysheet(data, title = "思源 Excel AI 编辑器") {
     uploadImage: () => false,
     plugins: [],
     data: normalizedData,
+    hook: {
+      cellUpdated: () => markUnsaved(),
+      sheetActivate: () => scheduleSheetResize(),
+    },
   });
   window.__moonExcelAIState = { ready: true, sheetCount: normalizedData.length, title };
   scheduleActiveSheetDataInit();
   scheduleSheetResize();
+  window.setTimeout(() => {
+    dirtyTrackingEnabled = true;
+  }, 600);
+}
+
+function dataToCelldata(data) {
+  const cells = [];
+  (data || []).forEach((row, rowIndex) => {
+    (row || []).forEach((cell, colIndex) => {
+      if (!cell) return;
+      const keys = typeof cell === "object" ? Object.keys(cell) : [];
+      const hasStyle = keys.some((key) => !["v", "m", "ct"].includes(key));
+      if (cellText(cell).trim() || hasStyle) cells.push({ r: rowIndex, c: colIndex, v: deepClone(cell) });
+    });
+  });
+  return cells;
 }
 
 function normalizeSheetForLuckysheet(sheet) {
-  const next = { ...sheet, config: { ...(sheet.config || {}) } };
-  if (Array.isArray(next.data) && next.data.length) delete next.celldata;
+  const next = deepClone({ ...sheet, config: { ...(sheet.config || {}) } });
+  if (Array.isArray(next.data) && next.data.length) {
+    next.celldata = dataToCelldata(next.data);
+    delete next.data;
+  }
   if (!Array.isArray(next.config.borderInfo)) next.config.borderInfo = [];
   next.config.merge ||= {};
   next.config.rowlen ||= {};
@@ -821,6 +1043,9 @@ function normalizeSheetForLuckysheet(sheet) {
 function ensureActiveSheetData() {
   const api = getSheetApi();
   if (!api || api.flowdata?.()?.length) return;
+  const activeSheet = getActiveSheet();
+  const existingData = activeSheet?.data || [];
+  if (existingData.some((row) => (row || []).some((cell) => cellText(cell).trim()))) return;
   if (api.setRangeValue) {
     api.setRangeValue([[blankCell()]], { range: { row: [0, 0], column: [0, 0] } });
   }
@@ -898,6 +1123,9 @@ function bindEvents() {
       if (action === "toggle-ai") {
         event.preventDefault();
         setAiPanelOpen(!document.querySelector(".moon-excel-app").classList.contains("ai-open"));
+      } else if (action === "save-workbook") {
+        event.preventDefault();
+        saveWorkbook();
       } else if (action === "toggle-settings") {
         event.preventDefault();
         byRole("settings").classList.toggle("open");
@@ -938,6 +1166,13 @@ function bindEvents() {
     byRole("model-status").textContent =
       byField("preset").value === "custom" ? "请填写第三方接口地址、API Key 和模型名称" : `已切换到 ${preset.label}`;
   });
+  document.addEventListener(
+    "input",
+    (event) => {
+      if (event.target?.closest?.("#luckysheet")) markUnsaved();
+    },
+    true
+  );
 }
 
 function setAiPanelOpen(open) {
@@ -975,7 +1210,16 @@ async function main() {
   updateOperation("summary");
   bindEvents();
   await loadSettings();
-  initLuckysheet();
+  const workbook = await loadWorkbook();
+  if (workbook) {
+    const restoreSheets = deepClone(workbook.sheets);
+    createLuckysheet(workbook.sheets, workbook.title);
+    scheduleWorkbookRestore(restoreSheets);
+    setStatus("已恢复已保存数据");
+  } else {
+    initLuckysheet();
+    setStatus("已就绪");
+  }
 }
 
 main().catch((error) => {

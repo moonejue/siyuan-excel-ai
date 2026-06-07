@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.23
+
+- Add a workbook save button to persist each embedded Excel block.
+- Restore saved workbook data when reopening the same note page.
+- Store workbook data per embedded block and overwrite the saved copy on each manual save.
+
 ## 0.1.22
 
 - Add a complete Chinese user guide `MANUAL_zh_CN.md` with installation, AI workflows, model setup, privacy notes, and troubleshooting.

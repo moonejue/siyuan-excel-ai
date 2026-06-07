@@ -3,7 +3,7 @@
 const { Plugin, showMessage } = require("siyuan");
 
 const PLUGIN_NAME = "siyuan-excel-ai";
-const PLUGIN_VERSION = "0.1.22";
+const PLUGIN_VERSION = "0.1.23";
 const SETTINGS_FILE = "settings.json";
 const MESSAGE_PREFIX = "siyuan-excel-ai:";
 
@@ -212,6 +212,38 @@ class SiyuanExcelAI extends Plugin {
     }
   }
 
+  findFrameByWindow(source) {
+    return [...document.querySelectorAll(`iframe[src*="/plugins/${PLUGIN_NAME}/dist/"], iframe[src*="${PLUGIN_NAME}/dist/"]`)].find(
+      (frame) => frame.contentWindow === source
+    );
+  }
+
+  safeWorkbookID(value) {
+    return String(value || "")
+      .trim()
+      .replace(/[^A-Za-z0-9_-]/g, "_")
+      .slice(0, 96);
+  }
+
+  getFrameWorkbookID(source) {
+    const frame = this.findFrameByWindow(source);
+    const hostBlock = frame?.closest?.(".protyle-wysiwyg [data-node-id]");
+    const urlID = (() => {
+      try {
+        return new URL(frame?.getAttribute("src") || "", window.location.origin).searchParams.get("workbook");
+      } catch {
+        return "";
+      }
+    })();
+    const id = this.safeWorkbookID(hostBlock?.dataset?.nodeId || frame?.dataset?.moonExcelId || urlID);
+    if (!id) throw new Error("无法定位当前 Excel 表格块，请重新插入表格后再保存");
+    return id;
+  }
+
+  workbookDataFile(workbookID) {
+    return `workbook-${this.safeWorkbookID(workbookID)}.json`;
+  }
+
   async insertEditorBlock() {
     try {
       const data = this.editorIframeMarkdown();
@@ -251,6 +283,24 @@ class SiyuanExcelAI extends Plugin {
       if (message.type === `${MESSAGE_PREFIX}save-settings`) {
         await this.saveData(SETTINGS_FILE, message.payload || {});
         reply({ type: `${MESSAGE_PREFIX}settings-saved`, ok: true });
+        return;
+      }
+      if (message.type === `${MESSAGE_PREFIX}load-workbook`) {
+        const workbookID = this.getFrameWorkbookID(event.source);
+        const stored = (await this.loadData(this.workbookDataFile(workbookID))) || null;
+        reply({ type: `${MESSAGE_PREFIX}workbook`, ok: true, data: { workbookID, workbook: stored } });
+        return;
+      }
+      if (message.type === `${MESSAGE_PREFIX}save-workbook`) {
+        const workbookID = this.getFrameWorkbookID(event.source);
+        const workbook = message.payload?.workbook;
+        if (!workbook || !Array.isArray(workbook.sheets)) throw new Error("没有可保存的工作簿数据");
+        await this.saveData(this.workbookDataFile(workbookID), {
+          ...workbook,
+          workbookID,
+          savedAt: new Date().toISOString(),
+        });
+        reply({ type: `${MESSAGE_PREFIX}workbook-saved`, ok: true, data: { workbookID } });
         return;
       }
       if (message.type === `${MESSAGE_PREFIX}show-message`) {
