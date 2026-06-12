@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.25
+
+- Fix workbook restore for rich cell state: formulas, bold, italic, alignment, font color, background color, number format, and other cell properties are now preserved.
+- Preserve styled empty cells instead of dropping them during serialization.
+- Restore workbook data through a safe sheet shell, then reapply Luckysheet configuration such as borders, merges, row/column sizes, frozen panes, filters, conditional formats, validation, images, and charts.
+- Fix range selection being collapsed after drag-selecting an area inside the embedded Excel frame.
+- Prime blank workbooks during initialization so Luckysheet keeps a full editable grid without asynchronously resetting the user's selected range.
+- Keep the render-completion guard from the local test build so reopened sheets do not stay stuck on the Luckysheet loading overlay.
+
 ## 0.1.24
 
 - Fix workbook data disappearing after closing and reopening SiYuan.

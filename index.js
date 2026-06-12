@@ -3,21 +3,17 @@
 const { Plugin, showMessage } = require("siyuan");
 
 const PLUGIN_NAME = "siyuan-excel-ai";
-const PLUGIN_VERSION = "0.1.24";
+const PLUGIN_VERSION = "0.1.25";
+const ASSET_VERSION = "0.1.25-r2";
 const SETTINGS_FILE = "settings.json";
 const MESSAGE_PREFIX = "siyuan-excel-ai:";
 
 class SiyuanExcelAI extends Plugin {
   onload() {
     this.handleFrameMessage = this.handleFrameMessage.bind(this);
-    this.handleEmbedPointer = this.handleEmbedPointer.bind(this);
-    this.restoreEmbedScroll = this.restoreEmbedScroll.bind(this);
     window.addEventListener("message", this.handleFrameMessage);
     this.embedObserver = new MutationObserver(() => this.decorateEmbeddedFrames());
     this.embedObserver.observe(document.body, { childList: true, subtree: true });
-    ["pointerdown", "mousedown", "mouseup", "click", "dblclick", "focusin"].forEach((type) => {
-      document.addEventListener(type, this.handleEmbedPointer, true);
-    });
     this.addTopBar({
       icon: "iconTable",
       title: this.i18n?.open || "插入 Excel AI 表格",
@@ -30,9 +26,6 @@ class SiyuanExcelAI extends Plugin {
   onunload() {
     window.removeEventListener("message", this.handleFrameMessage);
     this.embedObserver?.disconnect();
-    ["pointerdown", "mousedown", "mouseup", "click", "dblclick", "focusin"].forEach((type) => {
-      document.removeEventListener(type, this.handleEmbedPointer, true);
-    });
   }
 
   async uninstall() {
@@ -88,30 +81,30 @@ class SiyuanExcelAI extends Plugin {
   }
 
   editorIframeMarkdown() {
-    const pageUrl = `/plugins/${PLUGIN_NAME}/dist/index.html?v=${encodeURIComponent(PLUGIN_VERSION)}&embedded=1`;
+    const pageUrl = `/plugins/${PLUGIN_NAME}/dist/?v=${encodeURIComponent(ASSET_VERSION)}&embedded=1`;
     return `<iframe src="${pageUrl}" style="display: block; width: 100%; height: 720px; min-height: 720px; border: 1px solid var(--b3-border-color); border-radius: 6px; background: var(--b3-theme-background); vertical-align: top;" allowfullscreen allowpopups></iframe>`;
   }
 
-  isExcelFrameElement(element) {
-    return element?.matches?.(`iframe[src*="/plugins/${PLUGIN_NAME}/dist/"], iframe[src*="${PLUGIN_NAME}/dist/"]`);
-  }
-
-  findExcelFrameFromEvent(event) {
-    const path = event.composedPath?.() || [];
-    return path.find((item) => this.isExcelFrameElement(item));
-  }
-
-  handleEmbedPointer(event) {
-    const frame = this.findExcelFrameFromEvent(event);
-    if (!frame) return;
-    this.captureEmbedScroll(frame);
-    event.stopPropagation();
-    if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
-    this.scheduleEmbedScrollRestore();
+  normalizeFrameSrc(frame) {
+    try {
+      const url = new URL(frame.getAttribute("src") || "", window.location.origin);
+      const isPluginFrame = url.pathname.includes(`/plugins/${PLUGIN_NAME}/dist`);
+      if (!isPluginFrame) return;
+      const desiredPath = `/plugins/${PLUGIN_NAME}/dist/`;
+      const hasCurrentVersion = url.searchParams.get("v") === ASSET_VERSION;
+      if (url.pathname === desiredPath && hasCurrentVersion) return;
+      url.pathname = desiredPath;
+      url.searchParams.set("v", ASSET_VERSION);
+      url.searchParams.set("embedded", "1");
+      frame.setAttribute("src", `${url.pathname}${url.search}${url.hash}`);
+    } catch (error) {
+      console.warn(`[${PLUGIN_NAME}] normalize iframe src failed`, error);
+    }
   }
 
   decorateEmbeddedFrames() {
     document.querySelectorAll(`iframe[src*="/plugins/${PLUGIN_NAME}/dist/"], iframe[src*="${PLUGIN_NAME}/dist/"]`).forEach((frame) => {
+      this.normalizeFrameSrc(frame);
       frame.classList.add("moon-excel-ai-embed__frame");
       frame.setAttribute("allowfullscreen", "");
       frame.setAttribute("allowpopups", "");
@@ -122,94 +115,16 @@ class SiyuanExcelAI extends Plugin {
       frame.style.minHeight = "720px";
       frame.style.maxHeight = "720px";
       frame.style.verticalAlign = "top";
+      frame.style.userSelect = "none";
+      frame.style.webkitUserSelect = "none";
+      frame.style.webkitUserDrag = "none";
 
       const hostBlock = frame.closest(".protyle-wysiwyg [data-node-id]");
       hostBlock?.classList.add("moon-excel-ai-embed-block");
       hostBlock?.setAttribute("spellcheck", "false");
-      this.attachFrameScrollGuard(frame);
+      hostBlock?.setAttribute("contenteditable", "false");
+      hostBlock?.setAttribute("draggable", "false");
     });
-  }
-
-  getEmbedScroller(frame) {
-    return frame.closest(".protyle-content") || frame.closest(".layout-tab-container") || document.scrollingElement || document.documentElement;
-  }
-
-  captureEmbedScroll(frame, options = {}) {
-    const scroller = this.getEmbedScroller(frame);
-    if (options.preferExisting && this.embedScrollSnapshot?.frame === frame && this.embedScrollSnapshot?.scroller === scroller) {
-      this.embedScrollSnapshot.capturedAt = Date.now();
-      return;
-    }
-    this.embedScrollSnapshot = {
-      frame,
-      scroller,
-      scrollTop: scroller?.scrollTop || 0,
-      scrollLeft: scroller?.scrollLeft || 0,
-      windowX: window.scrollX || 0,
-      windowY: window.scrollY || 0,
-      frameTop: frame.getBoundingClientRect?.().top,
-      frameLeft: frame.getBoundingClientRect?.().left,
-      capturedAt: Date.now(),
-    };
-  }
-
-  restoreEmbedScroll() {
-    const snapshot = this.embedScrollSnapshot;
-    if (!snapshot?.scroller?.isConnected) return;
-    if (snapshot.frame?.isConnected && Number.isFinite(snapshot.frameTop)) {
-      const rect = snapshot.frame.getBoundingClientRect();
-      const topDelta = rect.top - snapshot.frameTop;
-      const leftDelta = rect.left - snapshot.frameLeft;
-      if (Math.abs(topDelta) > 0.5) snapshot.scroller.scrollTop += topDelta;
-      if (Math.abs(leftDelta) > 0.5) snapshot.scroller.scrollLeft += leftDelta;
-    }
-    snapshot.scroller.scrollTop = snapshot.scrollTop;
-    snapshot.scroller.scrollLeft = snapshot.scrollLeft;
-    if (window.scrollX !== snapshot.windowX || window.scrollY !== snapshot.windowY) {
-      window.scrollTo(snapshot.windowX, snapshot.windowY);
-    }
-  }
-
-  scheduleEmbedScrollRestore() {
-    window.requestAnimationFrame(() => {
-      this.restoreEmbedScroll();
-      window.requestAnimationFrame(this.restoreEmbedScroll);
-    });
-    window.setTimeout(this.restoreEmbedScroll, 0);
-    window.setTimeout(this.restoreEmbedScroll, 50);
-    window.setTimeout(this.restoreEmbedScroll, 150);
-    window.setTimeout(this.restoreEmbedScroll, 350);
-    window.setTimeout(this.restoreEmbedScroll, 800);
-  }
-
-  attachFrameScrollGuard(frame) {
-    if (frame.dataset.moonExcelScrollGuard === "true") return;
-    try {
-      const install = () => {
-        try {
-          const doc = frame.contentDocument;
-          const win = frame.contentWindow;
-          if (!doc || !win || doc.__moonExcelScrollGuard) return;
-          doc.__moonExcelScrollGuard = true;
-          const guard = () => {
-            this.captureEmbedScroll(frame);
-            this.scheduleEmbedScrollRestore();
-          };
-          ["pointerdown", "mousedown", "mouseup", "click", "dblclick", "focusin"].forEach((type) => {
-            doc.addEventListener(type, guard, true);
-          });
-          win.addEventListener("focus", guard, true);
-        } catch (error) {
-          console.warn(`[${PLUGIN_NAME}] install iframe scroll guard failed`, error);
-        }
-      };
-      frame.dataset.moonExcelScrollGuard = "true";
-      frame.addEventListener("load", install);
-      this.captureEmbedScroll(frame);
-      install();
-    } catch (error) {
-      console.warn(`[${PLUGIN_NAME}] attach iframe scroll guard failed`, error);
-    }
   }
 
   findFrameByWindow(source) {

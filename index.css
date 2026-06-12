@@ -23,10 +23,15 @@
   margin: 0 !important;
   vertical-align: top !important;
   transform: translateZ(0);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
 }
 
 .protyle-wysiwyg .moon-excel-ai-embed-block {
   box-sizing: border-box !important;
   margin-top: 8px;
   margin-bottom: 8px;
+  user-select: none;
+  -webkit-user-select: none;
 }

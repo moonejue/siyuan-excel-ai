@@ -15,6 +15,7 @@ Insert an editable Excel spreadsheet into the current SiYuan document, then run 
 - Insert an Excel editor block into the current document instead of opening a separate page.
 - Import `.xlsx` files and export the edited workbook as `.xlsx`.
 - Click `Save` to write the current workbook into SiYuan's data storage for this embedded Excel block, then reopen or restart SiYuan to restore it.
+- Preserve formulas, borders, cell styles, alignment, row/column sizes, and common Luckysheet workbook settings after saving and reopening.
 - Use common spreadsheet editing features: cells, formatting, borders, sheet switching, and range selection.
 - Run AI applications on selected ranges: summary, custom AI, classification, extraction, and formula calculation.
 - Preview the first 3 rows before applying to the full selection.
@@ -79,7 +80,7 @@ Restart SiYuan and enable the plugin from the downloaded plugins list.
 ## Current Limits
 
 - This version focuses on `.xlsx` import and export.
-- Import/export prioritizes cell values. Complex Excel styles, macros, and advanced workbook objects are not the primary compatibility target yet.
+- The in-plugin `Save` button preserves formulas, borders, common cell styles, alignment, row/column sizes, and common Luckysheet settings. `.xlsx` import/export still prioritizes workbook content; macros and complex advanced objects are not the primary compatibility target yet.
 - AI writeback always creates a new result column and does not overwrite the selected range.
 - The editor runs inside an iframe embedded in the current document. Mobile is not the primary target for this first version.
 
