@@ -1,0 +1,43 @@
+{
+  "name": "siyuan-excel-ai",
+  "version": "0.1.26",
+  "description": "Excel AI editor plugin for SiYuan with .xlsx import/export and AI row processing.",
+  "author": "moonejue",
+  "license": "MIT",
+  "homepage": "https://github.com/moonejue/siyuan-excel-ai#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/moonejue/siyuan-excel-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/moonejue/siyuan-excel-ai/issues"
+  },
+  "keywords": [
+    "siyuan",
+    "siyuan-plugin",
+    "excel",
+    "spreadsheet",
+    "ai",
+    "luckysheet",
+    "ollama",
+    "openai"
+  ],
+  "files": [
+    "plugin.json",
+    "index.js",
+    "index.css",
+    "dist",
+    "i18n",
+    "assets",
+    "icon.png",
+    "preview.png",
+    "README.md",
+    "README_zh_CN.md",
+    "MANUAL_zh_CN.md",
+    "CHANGELOG.md",
+    "NOTICE.md",
+    "LICENSE",
+    "xlsx.mjs"
+  ],
+  "private": false
+}

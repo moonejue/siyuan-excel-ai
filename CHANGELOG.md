@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.26
+
+- Add `package.json` project metadata so the repository matches the full marketplace publishing checklist in addition to the official bazaar automated checks.
+- Bump plugin and asset versions for a clean marketplace refresh.
+
 ## 0.1.25
 
 - Fix workbook restore for rich cell state: formulas, bold, italic, alignment, font color, background color, number format, and other cell properties are now preserved.

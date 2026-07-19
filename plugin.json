@@ -2,7 +2,7 @@
   "name": "siyuan-excel-ai",
   "author": "moonejue",
   "url": "https://github.com/moonejue/siyuan-excel-ai",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "minAppVersion": "3.6.5",
   "disabledInPublish": true,
   "backends": ["all"],
